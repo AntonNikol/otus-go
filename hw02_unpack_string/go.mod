@@ -1,4 +1,4 @@
-module github.com/AntonNikol/hw02_unpack_string
+module github.com/AntonNikol/otus-go/hw02_unpack_string
 
 go 1.19
 
