@@ -10,8 +10,12 @@ type Word struct {
 	Text     string
 }
 
-// Top10 Возвращающает слайс с 10-ю наиболее часто встречаемыми в тексте словами.
+// Top10 Возвращает слайс с 10-ю наиболее часто встречаемыми в тексте словами.
 func Top10(str string) []string {
+	if len(str) == 0 {
+		return []string{}
+	}
+
 	words := countWords(str)
 	sortedWords := sortWords(words)
 
