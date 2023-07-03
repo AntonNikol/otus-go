@@ -11,13 +11,15 @@ var ErrInvalidString = errors.New("invalid string")
 
 // Unpack Выполняет распаковку строки.
 func Unpack(str string) (string, error) {
-	var b strings.Builder
-	runes := []rune(str)
-
-	// Если 1 символ число
-	if len(str) > 0 && unicode.IsDigit(runes[0]) {
+	if len(str) == 0 {
+		return "", nil
+	}
+	if unicode.IsDigit(rune(str[0])) {
 		return "", ErrInvalidString
 	}
+
+	runes := []rune(str)
+	var result strings.Builder
 
 	for i, v := range runes {
 		switch {
@@ -27,14 +29,14 @@ func Unpack(str string) (string, error) {
 				return "", ErrInvalidString
 			}
 			count, _ := strconv.Atoi(string(runes[i+1]))
-			b.WriteString(strings.Repeat(string(v), count))
+			result.WriteString(strings.Repeat(string(v), count))
 			continue
 			// Если текущий символ число
 		case unicode.IsDigit(v):
 			continue
 		default:
-			b.WriteRune(v)
+			result.WriteRune(v)
 		}
 	}
-	return b.String(), nil
+	return result.String(), nil
 }
