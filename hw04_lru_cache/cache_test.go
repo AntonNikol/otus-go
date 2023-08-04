@@ -89,27 +89,31 @@ func TestCacheMultithreading(t *testing.T) {
 }
 
 func TestCacheWithEjection(t *testing.T) {
-	c := NewCache(1)
+	c := NewCache(2)
 	c.Set("aaa", 1)
 	c.Set("bbb", 2)
+
+	val, ok := c.Get("aaa")
+	require.True(t, ok)
+	require.Equal(t, 1, val)
+
+	val, ok = c.Get("bbb")
+	require.True(t, ok)
+	require.Equal(t, 2, val)
+
 	c.Set("ccc", 3)
 
 	c.Set("aaa", 20)
-	c.Set("bbb", 30)
-	c.Set("ccc", 40)
-	c.Set("aaa", 50)
-
-	c.Set("ddd", 60)
-
-	_, ok := c.Get("aaa")
+	val, ok = c.Get("aaa")
 	require.True(t, ok)
+	require.Equal(t, 20, val)
 
-	_, ok = c.Get("ccc")
-	require.True(t, ok)
-
-	_, ok = c.Get("ddd")
-	require.True(t, ok)
-
-	_, ok = c.Get("bbb")
+	// элемент должен отсутствовать в кэше
+	val, ok = c.Get("bbb")
 	require.False(t, ok)
+	require.Equal(t, nil, val)
+
+	val, ok = c.Get("ccc")
+	require.True(t, ok)
+	require.Equal(t, 3, val)
 }
