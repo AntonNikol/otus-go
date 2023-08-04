@@ -27,6 +27,18 @@ func NewCache(capacity int) Cache {
 	}
 }
 
+type cacheItem struct {
+	key   Key
+	value interface{}
+}
+
+func newCacheItem(key Key, value interface{}) *cacheItem {
+	return &cacheItem{
+		key:   key,
+		value: value,
+	}
+}
+
 func (c *lruCache) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -39,35 +51,47 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if item, ok := c.items[key]; ok {
-		c.queue.MoveToFront(item)
-		return item.Value, true
+	var cachedValue interface{}
+
+	node, ok := c.items[key]
+	if ok {
+		c.queue.MoveToFront(node)
+		item := c.getNodeItem(node)
+		cachedValue = item.value
 	}
-	return nil, false
+
+	return cachedValue, ok
+}
+
+func (c *lruCache) getNodeItem(node *ListItem) *cacheItem {
+	return node.Value.(*cacheItem)
 }
 
 func (c *lruCache) Set(key Key, value interface{}) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if item, ok := c.items[key]; ok {
-		c.queue.MoveToFront(item)
-		item.Value = value
-		return true
+	node, ok := c.items[key]
+
+	if ok {
+		item := c.getNodeItem(node)
+		item.value = value
+		c.queue.MoveToFront(node)
+		return ok
 	}
 
-	if c.queue.Len() >= c.capacity {
-		old := c.queue.Back()
-		if old != nil {
-			delete(c.items, key)
-			a := c.items
-			_ = a
-			c.queue.Remove(old)
-		}
+	if c.queue.Len() == c.capacity {
+		c.removeLastFromQueue()
 	}
+	item := newCacheItem(key, value)
+	node = c.queue.PushFront(item)
+	c.items[key] = node
+	return ok
+}
 
-	item := c.queue.PushFront(value)
-	c.items[key] = item
-
-	return false
+func (c *lruCache) removeLastFromQueue() {
+	leastUsedNode := c.queue.Back()
+	leastUsedItem := c.getNodeItem(leastUsedNode)
+	delete(c.items, leastUsedItem.key)
+	c.queue.Remove(leastUsedNode)
 }
