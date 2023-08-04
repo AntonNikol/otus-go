@@ -75,14 +75,18 @@ func (l *list) PushBack(v interface{}) *ListItem {
 }
 
 func (l *list) Remove(i *ListItem) {
-	// если 1 элемент в списке
-	if l.head == l.tail {
-		l.head = nil
-		l.tail = nil
-	} else {
+	if i.Prev != nil {
 		i.Prev.Next = i.Next
-		i.Next.Prev = i.Prev
+	} else {
+		l.head = i.Next
 	}
+
+	if i.Next != nil {
+		i.Next.Prev = i.Prev
+	} else {
+		l.tail = i.Prev
+	}
+
 	i.Prev = nil
 	i.Next = nil
 
