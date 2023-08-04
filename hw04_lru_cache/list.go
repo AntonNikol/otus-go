@@ -90,7 +90,6 @@ func (l *list) Remove(i *ListItem) {
 }
 
 func (l *list) MoveToFront(i *ListItem) {
-	// если 1 элемент в списке
 	if l.head == i {
 		return
 	}
@@ -98,7 +97,6 @@ func (l *list) MoveToFront(i *ListItem) {
 	next := i.Next
 	prev := i.Prev
 
-	// обновляем связи для элемента i
 	if next != nil {
 		next.Prev = prev
 	}
@@ -106,14 +104,9 @@ func (l *list) MoveToFront(i *ListItem) {
 		prev.Next = next
 	}
 
-	if i.Next != nil {
-		i.Next.Prev = i.Prev
-	}
-	if i.Prev != nil {
-		i.Prev.Next = i.Next
-	}
-
 	// перемещаем элемент в начало
+	i.Next = l.head
+	l.head.Prev = i
 	i.Prev = nil
 	l.head = i
 }
