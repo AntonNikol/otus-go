@@ -41,13 +41,13 @@ func (l *list) Back() *ListItem {
 func (l *list) PushFront(v interface{}) *ListItem {
 	var node *ListItem
 
-	// если список пустой
+	// Если список пустой
 	if l.head == nil {
 		node = &ListItem{Value: v}
 		l.head = node
 		l.tail = node
 	} else {
-		// вставка в начало
+		// Вставка в начало
 		node = &ListItem{Value: v, Next: l.head}
 		l.head.Prev = node
 		l.head = node
@@ -59,13 +59,13 @@ func (l *list) PushFront(v interface{}) *ListItem {
 func (l *list) PushBack(v interface{}) *ListItem {
 	var node *ListItem
 
-	// если список пустой
+	// Если список пустой
 	if l.tail == nil {
 		node := &ListItem{Value: v}
 		l.head = node
 		l.tail = node
 	} else {
-		// вставка в конец
+		// Вставка в конец
 		node := &ListItem{Value: v, Prev: l.tail}
 		l.tail.Next = node
 		l.tail = node
@@ -75,16 +75,20 @@ func (l *list) PushBack(v interface{}) *ListItem {
 }
 
 func (l *list) Remove(i *ListItem) {
-	if i.Prev != nil {
-		i.Prev.Next = i.Next
-	} else {
+	// Если элемент первый в списке
+	if i.Prev == nil {
 		l.head = i.Next
+		l.head.Prev = nil
+	} else {
+		i.Prev.Next = i.Next
 	}
 
-	if i.Next != nil {
-		i.Next.Prev = i.Prev
-	} else {
+	// Если элемент последний в списке
+	if i.Next == nil {
 		l.tail = i.Prev
+		l.tail.Next = nil
+	} else {
+		i.Next.Prev = i.Prev
 	}
 
 	i.Prev = nil
@@ -108,7 +112,7 @@ func (l *list) MoveToFront(i *ListItem) {
 		prev.Next = next
 	}
 
-	// перемещаем элемент в начало
+	// Перемещаем элемент в начало
 	i.Next = l.head
 	l.head.Prev = i
 	i.Prev = nil
