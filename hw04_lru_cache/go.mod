@@ -1,4 +1,4 @@
-module github.com/AntonNikol/hw04_lru_cache
+module github.com/AntonNikol/otus-go/hw04_lru_cache
 
 go 1.19
 
