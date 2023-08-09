@@ -2,14 +2,53 @@ package hw05parallelexecution
 
 import (
 	"errors"
+	"sync"
+	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
-// Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-	// Place your code here.
+	if n <= 0 {
+		return errors.New("number goroutines should be positive")
+	}
+	// Создаем синк группу
+	wg := sync.WaitGroup{}
+	wg.Add(n)
+
+	// Подсчет количества ошибок
+	var errCount int32
+
+	// Канал для задач
+	taskChan := make(chan Task)
+
+	// Запускаем горутины
+	for i := 0; i < n; i++ {
+		go func() {
+			defer wg.Done()
+			for task := range taskChan {
+				if err := task(); err != nil {
+					// Инкрементируем счетчик ошибок
+					atomic.AddInt32(&errCount, 1)
+				}
+			}
+		}()
+	}
+
+	for _, task := range tasks {
+		// Пока количество ошибок не превысило допустимое складываем задачи в канал
+		if atomic.LoadInt32(&errCount) >= int32(m) {
+			break
+		}
+		taskChan <- task
+	}
+	close(taskChan)
+	wg.Wait()
+
+	if errCount >= int32(m) {
+		return ErrErrorsLimitExceeded
+	}
 	return nil
 }
