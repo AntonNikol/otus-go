@@ -116,8 +116,10 @@ func (l *list) MoveToFront(i *ListItem) {
 	if prev != nil {
 		prev.Next = next
 	}
-	// Определяем последний элемент списка
-	l.tail = i.Prev
+	// Если i был последним элементом, то определяем новый последний элемент
+	if l.tail == i {
+		l.tail = i.Prev
+	}
 
 	// Перемещаем элемент в начало
 	i.Next = l.head
