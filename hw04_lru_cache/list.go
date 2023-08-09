@@ -77,7 +77,9 @@ func (l *list) PushBack(v interface{}) *ListItem {
 func (l *list) Remove(i *ListItem) {
 	// Если элемент первый в списке
 	if i.Prev == nil {
-		l.head = i.Next
+		if i.Next != nil {
+			l.head = i.Next
+		}
 		l.head.Prev = nil
 	} else {
 		i.Prev.Next = i.Next
@@ -85,7 +87,9 @@ func (l *list) Remove(i *ListItem) {
 
 	// Если элемент последний в списке
 	if i.Next == nil {
-		l.tail = i.Prev
+		if i.Prev != nil {
+			l.tail = i.Prev
+		}
 		l.tail.Next = nil
 	} else {
 		i.Next.Prev = i.Prev
@@ -98,6 +102,7 @@ func (l *list) Remove(i *ListItem) {
 }
 
 func (l *list) MoveToFront(i *ListItem) {
+	// Если элемент 1 в списке - ничего не делаем
 	if l.head == i {
 		return
 	}
@@ -111,6 +116,8 @@ func (l *list) MoveToFront(i *ListItem) {
 	if prev != nil {
 		prev.Next = next
 	}
+	//Определяем последний элемент списка
+	l.tail = i.Prev
 
 	// Перемещаем элемент в начало
 	i.Next = l.head
