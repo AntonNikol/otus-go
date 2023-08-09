@@ -6,8 +6,10 @@ import (
 	"sync/atomic"
 )
 
-var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
-var ErrNumberGoroutinesIncorrect = errors.New("number goroutines should be positive")
+var (
+	ErrErrorsLimitExceeded       = errors.New("errors limit exceeded")
+	ErrNumberGoroutinesIncorrect = errors.New("number goroutines should be positive")
+)
 
 type Task func() error
 
