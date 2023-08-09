@@ -7,13 +7,20 @@ import (
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+var ErrNumberGoroutinesIncorrect = errors.New("number goroutines should be positive")
 
 type Task func() error
 
 func Run(tasks []Task, n, m int) error {
 	if n <= 0 {
-		return errors.New("number goroutines should be positive")
+		return ErrNumberGoroutinesIncorrect
 	}
+
+	// Если m меньше или равно 0 - игнорируем все ошибки
+	if m <= 0 {
+		m = len(tasks) + 1
+	}
+
 	// Создаем синк группу
 	wg := sync.WaitGroup{}
 	wg.Add(n)
