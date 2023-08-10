@@ -43,6 +43,9 @@ func Run(tasks []Task, n, m int) error {
 		go func() {
 			defer wg.Done()
 			for task := range taskChan {
+				if task == nil {
+					return
+				}
 				if err := task(); err != nil {
 					// Инкрементируем счетчик ошибок
 					atomic.AddInt32(&errCount, 1)
