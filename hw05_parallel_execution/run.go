@@ -7,15 +7,20 @@ import (
 )
 
 var (
-	ErrErrorsLimitExceeded       = errors.New("errors limit exceeded")
-	ErrNumberGoroutinesIncorrect = errors.New("number goroutines should be positive")
+	ErrErrorsLimitExceeded     = errors.New("errors limit exceeded")
+	ErrNumberGoroutinesInvalid = errors.New("number goroutines should be positive")
+	ErrNoTasks                 = errors.New("no tasks provided")
 )
 
 type Task func() error
 
 func Run(tasks []Task, n, m int) error {
+	if len(tasks) == 0 {
+		return ErrNoTasks
+	}
+
 	if n <= 0 {
-		return ErrNumberGoroutinesIncorrect
+		return ErrNumberGoroutinesInvalid
 	}
 
 	// Если m меньше или равно 0 - игнорируем все ошибки

@@ -93,10 +93,21 @@ func TestRun(t *testing.T) {
 	t.Run("the number of goroutines is 0", func(t *testing.T) {
 		tasksCount := 50
 		tasks := make([]Task, 0, tasksCount)
+		tasks = append(tasks, func() error { return nil })
 		workersCount := 0
 		maxErrorsCount := 0
 
 		err := Run(tasks, workersCount, maxErrorsCount)
-		require.Equalf(t, err, ErrNumberGoroutinesIncorrect, "actual err - %v", err)
+		require.Equalf(t, err, ErrNumberGoroutinesInvalid, "actual err - %v", err)
+	})
+
+	t.Run("no tasks provided", func(t *testing.T) {
+		tasksCount := 50
+		tasks := make([]Task, 0, tasksCount)
+		workersCount := 0
+		maxErrorsCount := 0
+
+		err := Run(tasks, workersCount, maxErrorsCount)
+		require.Equalf(t, err, ErrNoTasks, "actual err - %v", err)
 	})
 }
