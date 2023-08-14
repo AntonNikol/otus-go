@@ -50,13 +50,23 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+		c := NewCache(10)
+
+		c.Set("aaa", 10)
+		c.Set("bbb", 10)
+
+		c.Clear()
+		val, ok := c.Get("aaa")
+		require.False(t, ok)
+		require.Nil(t, val)
+
+		val, ok = c.Get("bbb")
+		require.False(t, ok)
+		require.Nil(t, val)
 	})
 }
 
 func TestCacheMultithreading(t *testing.T) {
-	t.Skip() // Remove me if task with asterisk completed.
-
 	c := NewCache(10)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
@@ -76,4 +86,34 @@ func TestCacheMultithreading(t *testing.T) {
 	}()
 
 	wg.Wait()
+}
+
+func TestCacheWithEjection(t *testing.T) {
+	c := NewCache(2)
+	c.Set("aaa", 1)
+	c.Set("bbb", 2)
+
+	val, ok := c.Get("aaa")
+	require.True(t, ok)
+	require.Equal(t, 1, val)
+
+	val, ok = c.Get("bbb")
+	require.True(t, ok)
+	require.Equal(t, 2, val)
+
+	c.Set("ccc", 3)
+
+	c.Set("aaa", 20)
+	val, ok = c.Get("aaa")
+	require.True(t, ok)
+	require.Equal(t, 20, val)
+
+	// элемент должен отсутствовать в кэше
+	val, ok = c.Get("bbb")
+	require.False(t, ok)
+	require.Equal(t, nil, val)
+
+	val, ok = c.Get("ccc")
+	require.True(t, ok)
+	require.Equal(t, 3, val)
 }
