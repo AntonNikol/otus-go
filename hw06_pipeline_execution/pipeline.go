@@ -8,7 +8,7 @@ type (
 
 type Stage func(in In) (out Out)
 
-// ExecutePipeline Выполняет пайплайн
+// ExecutePipeline Выполняет пайплайн.
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	for _, stage := range stages {
 		if stage != nil {
@@ -19,7 +19,7 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	return in
 }
 
-// createStageChannel Создает канал для передачи данных между стейджами
+// createStageChannel Создает канал для передачи данных между стейджами.
 func createStageChannel(in In, done In) Out {
 	stageCh := make(Bi)
 	go func() {
