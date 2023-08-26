@@ -30,6 +30,7 @@ func TestPipeline(t *testing.T) {
 	}
 
 	stages := []Stage{
+		nil,
 		g("Dummy", func(v interface{}) interface{} { return v }),
 		g("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 }),
 		g("Adder (+ 100)", func(v interface{}) interface{} { return v.(int) + 100 }),
