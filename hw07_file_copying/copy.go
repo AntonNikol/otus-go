@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/cheggaaa/pb"
 	"github.com/pkg/errors"
 	"io"
 	"log"
@@ -66,12 +67,13 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if limit == 0 {
 		bytesToCopy = fileSize - offset
 	}
-	//
-	//// Создание и настройка прогресс-бара
-	//bar := pb.New64(bytesToCopy)
-	//defer bar.Finish()
 
-	// Создаю временный файл и копирую данные в него
+	// Создание и настройка прогресс-бара
+	bar := pb.New64(bytesToCopy)
+	// Создание функции обратного вызова для прогресс-бара
+	barReader := bar.NewProxyReader(file)
+
+	// Создаем временный файл и копируем данные в него
 	tmpFile, err := os.CreateTemp(".", "tmp_file_")
 	if err != nil {
 		return errors.Wrap(err, "unable create tmp file")
@@ -80,7 +82,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	log.Printf("Временный файл создан %v", nil)
 
 	// Копируем нужную часть файла
-	_, err = io.CopyN(tmpFile, file, bytesToCopy)
+	_, err = io.CopyN(tmpFile, barReader, bytesToCopy)
 	if err != nil && err != io.EOF {
 		return errors.Wrap(err, "unable copy file")
 	}
@@ -92,5 +94,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		return errors.Wrap(err, "rename error")
 	}
+	bar.Finish()
+
 	return nil
 }
