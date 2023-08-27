@@ -14,16 +14,12 @@ var (
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 )
 
+// Copy копирует данные из исходного файла в целевой файл с учетом смещения и ограничения.
 func Copy(fromPath, toPath string, offset, limit int64) error {
-	// Открытие файла
-	file, err := os.OpenFile(fromPath, os.O_RDONLY, 444)
+	file, err := openFile(fromPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return ErrNotFound
-		}
-		return errors.Wrap(err, "file open error")
+		return err
 	}
-
 	defer func() {
 		err = file.Close()
 		if err != nil {
@@ -31,26 +27,21 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		}
 	}()
 
-	// Данные о файле
-	fileInfo, err := file.Stat()
+	fileSize, err := getFileSize(file)
 	if err != nil {
-		return errors.Wrap(err, "unable load file info")
+		return err
 	}
 
-	// Определяем длину файла в байтах
-	fileSize := fileInfo.Size()
-	if offset > fileSize {
-		return ErrOffsetExceedsFileSize
-	}
-
-	log.Printf("fileseze %v", fileSize)
-
-	// Если неизвестна длина (например, /dev/urandom)
+	// Если неизвестна длина (например, файл /dev/urandom)
 	if fileSize == 0 {
 		return ErrUnsupportedFile
 	}
 
-	// Определение количества копируемых байт
+	err = validateOffset(fileSize, offset)
+	if err != nil {
+		return err
+	}
+
 	bytesToCopy := fileSize - offset
 	if limit > 0 && limit < bytesToCopy {
 		bytesToCopy = limit
@@ -58,43 +49,76 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 	_, err = file.Seek(offset, 0)
 	if err != nil {
-		return errors.Wrap(err, "unable set offset in file")
+		return errors.Wrap(err, "unable to set offset in file")
 	}
 
-	log.Printf("bytesToCopy %v", bytesToCopy)
-
-	// Если limit равен 0, копируем все доступные данные
-	if limit == 0 {
-		bytesToCopy = fileSize - offset
-	}
-
-	// Создание и настройка прогресс-бара
-	bar := pb.New64(bytesToCopy)
-	// Создание функции обратного вызова для прогресс-бара
-	barReader := bar.NewProxyReader(file)
-
-	// Создаем временный файл и копируем данные в него
-	tmpFile, err := os.CreateTemp(".", "tmp_file_")
+	tmpFile, err := createTempFile()
 	if err != nil {
-		return errors.Wrap(err, "unable create tmp file")
+		return err
 	}
 
-	log.Printf("Временный файл создан %v", nil)
-
-	// Копируем нужную часть файла
-	_, err = io.CopyN(tmpFile, barReader, bytesToCopy)
-	if err != nil && err != io.EOF {
-		return errors.Wrap(err, "unable copy file")
+	err = copyDataWithProgress(file, tmpFile, bytesToCopy)
+	if err != nil {
+		return err
 	}
 
-	log.Printf("Копируется байт %v", bytesToCopy)
-
-	// Копирование завершено, переименование временного файла
 	err = os.Rename(tmpFile.Name(), toPath)
 	if err != nil {
 		return errors.Wrap(err, "rename error")
 	}
-	bar.Finish()
 
+	return nil
+}
+
+// openFile открывает файл по указанному пути и возвращает его указатель
+func openFile(filePath string) (*os.File, error) {
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 444)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrNotFound
+		}
+		return nil, errors.Wrap(err, "file open error")
+	}
+	return file, nil
+}
+
+// getFileSize получает размер файла
+func getFileSize(file *os.File) (int64, error) {
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return 0, errors.Wrap(err, "unable to load file info")
+	}
+	return fileInfo.Size(), nil
+}
+
+// validateOffset проверяет, что смещение (offset) не превышает размер файла.
+func validateOffset(fileSize, offset int64) error {
+	if offset > fileSize {
+		return ErrOffsetExceedsFileSize
+	}
+	return nil
+}
+
+// createTempFile создает временный файл и возвращает его указатель.
+func createTempFile() (*os.File, error) {
+	tmpFile, err := os.CreateTemp(".", "tmp_file_")
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create tmp file")
+	}
+	return tmpFile, nil
+}
+
+// copyDataWithProgress копирует данные из reader в writer с отображением прогресса.
+func copyDataWithProgress(reader io.Reader, writer io.Writer, bytesToCopy int64) error {
+	bar := pb.New64(bytesToCopy)
+	bar.Start()
+	barReader := bar.NewProxyReader(reader)
+
+	_, err := io.CopyN(writer, barReader, bytesToCopy)
+	if err != nil && err != io.EOF {
+		return errors.Wrap(err, "unable to copy data")
+	}
+
+	bar.Finish()
 	return nil
 }
