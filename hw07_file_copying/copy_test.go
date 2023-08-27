@@ -2,9 +2,10 @@ package main
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 var (
