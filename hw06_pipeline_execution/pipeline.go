@@ -23,7 +23,11 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 func createStageChannel(in In, done In) Out {
 	stageCh := make(Bi)
 	go func() {
-		defer close(stageCh)
+		defer func() {
+			close(stageCh)
+			// вычитываем значения из канала in чтобы stage не завис
+			<-in
+		}()
 		for {
 			select {
 			// если получили сигнал о завершении
@@ -35,7 +39,11 @@ func createStageChannel(in In, done In) Out {
 					return
 				}
 				// передаем данные в канал
-				stageCh <- v
+				select {
+				case <-done:
+					return
+				case stageCh <- v:
+				}
 			}
 		}
 	}()
