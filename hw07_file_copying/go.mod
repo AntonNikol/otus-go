@@ -1,3 +1,5 @@
-module github.com/fixme_my_friend/hw07_file_copying
+module github.com/AntonNikol/otus-go/hw07_file_copying
 
 go 1.19
+
+require github.com/pkg/errors v0.9.1
