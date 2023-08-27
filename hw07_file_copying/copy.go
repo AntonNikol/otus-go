@@ -70,9 +70,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	return nil
 }
 
-// openFile открывает файл по указанному пути и возвращает его указатель
+// openFile открывает файл по указанному пути и возвращает его указатель.
 func openFile(filePath string) (*os.File, error) {
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 444)
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0644)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, ErrNotFound
@@ -82,7 +82,7 @@ func openFile(filePath string) (*os.File, error) {
 	return file, nil
 }
 
-// getFileSize получает размер файла
+// getFileSize получает размер файла.
 func getFileSize(file *os.File) (int64, error) {
 	fileInfo, err := file.Stat()
 	if err != nil {
@@ -115,7 +115,7 @@ func copyDataWithProgress(reader io.Reader, writer io.Writer, bytesToCopy int64)
 	barReader := bar.NewProxyReader(reader)
 
 	_, err := io.CopyN(writer, barReader, bytesToCopy)
-	if err != nil && err != io.EOF {
+	if err != nil && errors.Is(err, io.EOF) {
 		return errors.Wrap(err, "unable to copy data")
 	}
 

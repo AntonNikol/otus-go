@@ -13,6 +13,8 @@ var (
 )
 
 func prepareFileForTest(t *testing.T) (*os.File, int64) {
+	t.Helper()
+
 	file, err := os.Open(inputFilePath)
 	require.NoError(t, err)
 
@@ -23,6 +25,8 @@ func prepareFileForTest(t *testing.T) (*os.File, int64) {
 }
 
 func removeTestFile(t *testing.T, filePath string) {
+	t.Helper()
+
 	err := os.Remove(filePath)
 	require.NoError(t, err)
 }
