@@ -73,7 +73,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 // openFile открывает файл по указанному пути и возвращает его указатель.
 func openFile(filePath string) (*os.File, error) {
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0644)
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0644) //nolint:gofumpt
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, ErrNotFound
