@@ -56,7 +56,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 
 	defer func() {
-		closeFile(tmpFile)
+		removeFile(tmpFile)
 	}()
 
 	err = copyDataWithProgress(file, tmpFile, bytesToCopy)
@@ -130,5 +130,13 @@ func closeFile(file *os.File) {
 	err := file.Close()
 	if err != nil {
 		log.Printf("file %v close error: %v", file.Name(), err)
+	}
+}
+
+// removeFile удаляет файл по указателю.
+func removeFile(file *os.File) {
+	err := os.Remove(file.Name())
+	if err != nil {
+		log.Printf("file %v remove error: %v", file.Name(), err)
 	}
 }
