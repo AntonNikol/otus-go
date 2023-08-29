@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/cheggaaa/pb"
+	"github.com/cheggaaa/pb/v3"
 	"github.com/pkg/errors"
 )
 
@@ -21,9 +21,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		closeFile(file)
-	}()
+	defer file.Close()
 
 	fileSize, err := getFileSize(file)
 	if err != nil {
@@ -50,23 +48,18 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return errors.Wrap(err, "unable to set offset in file")
 	}
 
-	tmpFile, err := createTempFile()
+	newFile, err := createFile(toPath)
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
-	defer func() {
-		removeFile(tmpFile)
-	}()
-
-	err = copyDataWithProgress(file, tmpFile, bytesToCopy)
+	err = copyDataWithProgress(file, newFile, bytesToCopy)
 	if err != nil {
+		defer func() {
+			removeFile(newFile)
+		}()
 		return err
-	}
-
-	err = os.Rename(tmpFile.Name(), toPath)
-	if err != nil {
-		return errors.Wrap(err, "rename error")
 	}
 
 	return nil
@@ -101,36 +94,28 @@ func validateOffset(fileSize, offset int64) error {
 	return nil
 }
 
-// createTempFile создает временный файл и возвращает его указатель.
-func createTempFile() (*os.File, error) {
-	tmpFile, err := os.CreateTemp(".", "tmp_file_")
+// createFile создает временный файл и возвращает его указатель.
+func createFile(fromPath string) (*os.File, error) {
+	file, err := os.Create(fromPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create tmp file")
 	}
-	return tmpFile, nil
+	return file, nil
 }
 
 // copyDataWithProgress копирует данные из reader в writer с отображением прогресса.
 func copyDataWithProgress(reader io.Reader, writer io.Writer, bytesToCopy int64) error {
-	bar := pb.New64(bytesToCopy)
+	bar := pb.Start64(bytesToCopy)
 	bar.Start()
 	barReader := bar.NewProxyReader(reader)
-
 	_, err := io.CopyN(writer, barReader, bytesToCopy)
-	if err != nil && errors.Is(err, io.EOF) {
+
+	if err != nil && !errors.Is(err, io.EOF) {
 		return errors.Wrap(err, "unable to copy data")
 	}
 
 	bar.Finish()
 	return nil
-}
-
-// closeFile закрывает файл по указателю.
-func closeFile(file *os.File) {
-	err := file.Close()
-	if err != nil {
-		log.Printf("file %v close error: %v", file.Name(), err)
-	}
 }
 
 // removeFile удаляет файл по указателю.
