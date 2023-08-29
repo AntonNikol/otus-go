@@ -22,10 +22,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return err
 	}
 	defer func() {
-		err = file.Close()
-		if err != nil {
-			log.Printf("file %v close error: %v", fromPath, err)
-		}
+		closeFile(file)
 	}()
 
 	fileSize, err := getFileSize(file)
@@ -57,6 +54,10 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		closeFile(tmpFile)
+	}()
 
 	err = copyDataWithProgress(file, tmpFile, bytesToCopy)
 	if err != nil {
@@ -122,4 +123,12 @@ func copyDataWithProgress(reader io.Reader, writer io.Writer, bytesToCopy int64)
 
 	bar.Finish()
 	return nil
+}
+
+// closeFile закрывает файл по указателю.
+func closeFile(file *os.File) {
+	err := file.Close()
+	if err != nil {
+		log.Printf("file %v close error: %v", file.Name(), err)
+	}
 }
